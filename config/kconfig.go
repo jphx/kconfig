@@ -257,7 +257,7 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 
 	// We're going to need the current value of the KUBECONFIG environment variable later, so fetch
 	// it before we change it.
-	kubeconfigEnvVar := os.Getenv("KUBECONFIG")
+	kubeconfigEnvVar, kubeconfigEnvVarIsSet := os.LookupEnv("KUBECONFIG")
 
 	// When reading the kube config using ReadKubeConfig(), the library it calls will read and use
 	// the KUBECONFIG env var.  We'd like it to use a "fresh" value that doesn't include any
@@ -282,6 +282,17 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 
 	// Read the kubectl config information that establishes the configuration we're working with.
 	kubeconfig := ReadKubeConfig()
+
+	// Restore the KUBECONFIG environment variable, in case it's important to the caller.
+	if !kubeconfigEnvVarIsSet {
+		err = os.Unsetenv("KUBECONFIG")
+	} else {
+		err = os.Setenv("KUBECONFIG", kubeconfigEnvVar)
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error restoring the KUBECONFIG environment variable: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Figure out what kubectl context we should refer to.
 	baseContext := kubeconfig.CurrentContext
