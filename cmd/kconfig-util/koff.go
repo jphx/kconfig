@@ -8,16 +8,16 @@ import (
 	"github.com/jphx/kconfig/config"
 )
 
-type KoffOptions struct {
+type koffCommandOptions struct {
 }
 
-var koffOptions KoffOptions
+var koffOptions koffCommandOptions
 
-func (o *KoffOptions) Usage() string {
+func (o *koffCommandOptions) Usage() string {
 	return ""
 }
 
-func (o *KoffOptions) Execute(args []string) error {
+func (o *koffCommandOptions) Execute(args []string) error {
 	commandProcessor = koffProcessor
 	commandName = "koff"
 

@@ -8,9 +8,13 @@ var CommonOptions struct {
 	Debug bool `long:"debug" description:"Enable debug-level messages"`
 }
 
+// RootLogger is the root logger for the application.
 var RootLogger = initializeLogger()
+
+// LoggingLevel controls the current logging level.  It's initially set to Info.
 var LoggingLevel zap.AtomicLevel
 
+// CreateLogger creates a named child logger of the root logger.
 func CreateLogger(name string) *zap.SugaredLogger {
 	return RootLogger.Named(name)
 }

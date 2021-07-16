@@ -7,16 +7,16 @@ import (
 	"github.com/jphx/kconfig/config"
 )
 
-type CompleteOptions struct {
+type completeCommandOptions struct {
 }
 
-var completeOptions CompleteOptions
+var completeOptions completeCommandOptions
 
-func (o *CompleteOptions) Usage() string {
+func (o *completeCommandOptions) Usage() string {
 	return "nickname-prefix"
 }
 
-func (o *CompleteOptions) Execute(args []string) error {
+func (o *completeCommandOptions) Execute(args []string) error {
 	commandProcessor = completeProcessor
 	commandName = "complete"
 

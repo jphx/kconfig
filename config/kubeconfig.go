@@ -8,6 +8,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+// ReadKubeConfig reads the current kubectl configuration using the default search path, possibly as
+// modified by the current KUBECONFIG env var value.
 func ReadKubeConfig() *clientcmdapi.Config {
 	configAccess := clientcmd.NewDefaultPathOptions()
 	config, err := configAccess.GetStartingConfig()

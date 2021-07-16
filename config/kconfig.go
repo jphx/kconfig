@@ -32,6 +32,7 @@ type Kconfig struct {
 	Nicknames   map[string]string
 }
 
+// KconfigPreferences describes the format of the kconfig.yaml file.
 type KconfigPreferences struct {
 	// DefaultKubectl give the name (with or without a path) of the kubectl executable to use if the
 	// nickname definition doesn't explicitly provide one.  If not specified, the default is "kubectl".
@@ -63,7 +64,7 @@ type KconfigOptions struct {
 	User       string `long:"user" value-name:"NAME" description:"The user name to use.  If not specified, the user associated the specified or default context is used."`
 }
 
-func GetHomeDirectory() string {
+func getHomeDirectory() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		common.RootLogger.Panic("Unable to get user's home directory: ", err)
@@ -75,6 +76,9 @@ func GetHomeDirectory() string {
 var cachedKconfig *Kconfig
 var cachedKconfigError error
 
+// GetKconfig fetches the configuration as describes in kconfig.yaml and possibly augmented with
+// kalias.txt.  It's safe to call multiple times.  Only the first call with read and parse the
+// files.  Subsequent calls will return cached results.
 func GetKconfig() *Kconfig {
 	//if cachedKconfigError != nil {
 	//	return nil, cachedKconfigError
@@ -98,7 +102,7 @@ func readKconfig() (*Kconfig, error) {
 		Nicknames: make(map[string]string),
 	}
 
-	configFile, err := os.Open(filepath.Join(GetHomeDirectory(), ".kube", "kconfig.yaml"))
+	configFile, err := os.Open(filepath.Join(getHomeDirectory(), ".kube", "kconfig.yaml"))
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
@@ -125,7 +129,7 @@ func readKconfig() (*Kconfig, error) {
 	if kconfig.Preferences.ReadKaliasConfig {
 		logger.Debug("Merging contents of kalias.txt.")
 		// We should merge the config we've read with the older kalias config file.
-		configFile, err = os.Open(filepath.Join(GetHomeDirectory(), ".kube", "kalias.txt"))
+		configFile, err = os.Open(filepath.Join(getHomeDirectory(), ".kube", "kalias.txt"))
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return kconfig, nil
@@ -186,7 +190,7 @@ func readKconfig() (*Kconfig, error) {
 	return kconfig, nil
 }
 
-func LookupKconfigNickname(nickname string) string {
+func lookupKconfigNickname(nickname string) string {
 	kconfig := GetKconfig()
 	defn, exists := kconfig.Nicknames[nickname]
 	if !exists {
@@ -197,7 +201,7 @@ func LookupKconfigNickname(nickname string) string {
 	return defn
 }
 
-func ParseNicknameDefinition(definition string) (*KconfigOptions, string) {
+func parseNicknameDefinition(definition string) (*KconfigOptions, string) {
 	kubectlExecutable := GetKconfig().Preferences.DefaultKubectl
 	if kubectlExecutable == "" {
 		kubectlExecutable = "kubectl"
@@ -253,11 +257,11 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 		kconfigOptions = &KconfigOptions{} // So we don't have keep checking for nil
 	}
 
-	defn := LookupKconfigNickname(nickname)
+	defn := lookupKconfigNickname(nickname)
 	logger.Debugf("The definition is nickname \"%s\" is: %s", nickname, defn)
 
 	// Parse the nickname's definition
-	nicknameOptions, kubectlExecutable := ParseNicknameDefinition(defn)
+	nicknameOptions, kubectlExecutable := parseNicknameDefinition(defn)
 	var overrides []string
 
 	// We're going to need the current value of the KUBECONFIG environment variable later, so fetch
@@ -430,6 +434,9 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 	return newKubeconfigEnvVar, kubectlExecutable, strings.Join(overrides, ",")
 }
 
+// GetExistingSessionLocalFilename parses the passed value, which is interpreted as a KUBECONFIG
+// value.  If the first entry in the search path refers to a session-local kubectl config file, its
+// name is returned.  Otherwise an empty string is returned.
 func GetExistingSessionLocalFilename(kubeconfigEnvVar string) string {
 	//kubeconfigEnvVar := os.Getenv("KUBECONFIG")
 	logger.Debugf("Fetched KUBECONFIG of: %s", kubeconfigEnvVar)

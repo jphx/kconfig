@@ -6,17 +6,17 @@ import (
 	"github.com/jphx/kconfig/config"
 )
 
-type KsetOptions struct {
+type ksetCommandOptions struct {
 	config.KconfigOptions
 }
 
-var ksetOptions KsetOptions
+var ksetOptions ksetCommandOptions
 
-func (o *KsetOptions) Usage() string {
+func (o *ksetCommandOptions) Usage() string {
 	return "nickname [override-options]"
 }
 
-func (o *KsetOptions) Execute(args []string) error {
+func (o *ksetCommandOptions) Execute(args []string) error {
 	commandProcessor = ksetProcessor
 	commandName = "kset"
 
