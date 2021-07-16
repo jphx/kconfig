@@ -29,17 +29,13 @@ func main() {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "Looking up executable: %s\n", kubectlExecutable)
+	//fmt.Fprintf(os.Stderr, "Looking up executable: %s\n", kubectlExecutable)
 	executable, err := findExecutable(kubectlExecutable, me)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stderr, "Found executable at: %s\n", executable)
-	kev := os.Getenv("KUBECONFIG")
-	if kev != "" {
-		fmt.Fprintf(os.Stderr, "KUBECONFIG env var is: %s\n", kev)
-	}
+	//fmt.Fprintf(os.Stderr, "Found executable at: %s\n", executable)
 
 	var argv []string
 	argv = append(argv, executable)

@@ -118,9 +118,12 @@ func readKconfig() (*Kconfig, error) {
 		if kconfig.Nicknames == nil {
 			kconfig.Nicknames = make(map[string]string)
 		}
+
+		//logger.Debugf("There are %d nicknames defined in kconfig.yaml.  Preferences are: %#v", len(kconfig.Nicknames), kconfig.Preferences)
 	}
 
 	if kconfig.Preferences.ReadKaliasConfig {
+		logger.Debug("Merging contents of kalias.txt.")
 		// We should merge the config we've read with the older kalias config file.
 		configFile, err = os.Open(filepath.Join(GetHomeDirectory(), ".kube", "kalias.txt"))
 		if err != nil {
@@ -176,6 +179,8 @@ func readKconfig() (*Kconfig, error) {
 		}
 
 		configFile.Close()
+	} else {
+		logger.Debug("Skipping merging of contents of kalias.txt.")
 	}
 
 	return kconfig, nil
@@ -386,6 +391,9 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 		EnvVar:       "",
 		LoadingRules: clientcmd.NewDefaultClientConfigLoadingRules(),
 	}
+
+	// Suppress any warning that might result of a missing target file.
+	configAccess.LoadingRules.WarnIfAllMissing = false
 
 	err = clientcmd.ModifyConfig(configAccess, *newConfigFileContent, true)
 	if err != nil {
