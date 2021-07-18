@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Config
+preferences: {}
+clusters: null
+contexts:
+  - context:
+      cluster: dev
+      namespace: namespace-override
+      user: devuser2
+    name: kconfig_context
+current-context: kconfig_context
+users: null

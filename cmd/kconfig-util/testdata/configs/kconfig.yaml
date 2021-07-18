@@ -1,0 +1,17 @@
+#preferences:
+#  default_kubectl: xxx
+#  change_prompt: false
+#  show_overrides_in_prompt: false
+#  read_kalias_config: true
+#  base_kubeconfig: xxx
+
+nicknames:
+  dev: --context dev
+  dev-namespace: --context dev --namespace namespace-override
+  dev-user: --context dev --user devuser2
+  dev-namespace-user: --context dev -n namespace-override --user devuser2
+  bad-option: --bad-option foo
+  dev-with-executable: kubectl-99 --context dev
+  dev-assume-testing: --context test
+  dev-with-kubeconfig: --context test --kubeconfig $HOME/.kube/testing.config
+  dev-with-kubeconfig-namespace: --context test --kubeconfig $HOME/.kube/testing.config -n testing-namespace

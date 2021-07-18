@@ -28,8 +28,8 @@ var kconfigTmpNicknameDir = filepath.Join(os.TempDir(), "kconfig", "nicks")
 
 // Kconfig describes the format of the ~/.kube/kconfig.yaml file.
 type Kconfig struct {
-	Preferences KconfigPreferences
-	Nicknames   map[string]string
+	Preferences KconfigPreferences `yaml:"preferences,omitempty"`
+	Nicknames   map[string]string  `yaml:"nicknames,omitempty"`
 }
 
 // KconfigPreferences describes the format of the kconfig.yaml file.
@@ -102,11 +102,14 @@ func readKconfig() (*Kconfig, error) {
 		Nicknames: make(map[string]string),
 	}
 
-	configFile, err := os.Open(filepath.Join(getHomeDirectory(), ".kube", "kconfig.yaml"))
+	kconfigYamlFilename := filepath.Join(getHomeDirectory(), ".kube", "kconfig.yaml")
+	configFile, err := os.Open(kconfigYamlFilename)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
+
+		logger.Debugf("Skipping read of kconfig.yaml, since file \"%s\" doesn't exist.", kconfigYamlFilename)
 
 		// If the Kconfig file doesn't exist, maybe the Kalias file will exist.
 		kconfig.Preferences.ReadKaliasConfig = true
@@ -118,12 +121,16 @@ func readKconfig() (*Kconfig, error) {
 		if err != nil {
 			return nil, err
 		}
+		//logger.Debugf("Read kconfig.yaml config from file \"%s\".", kconfigYamlFilename)
 
 		if kconfig.Nicknames == nil {
 			kconfig.Nicknames = make(map[string]string)
 		}
 
 		//logger.Debugf("There are %d nicknames defined in kconfig.yaml.  Preferences are: %#v", len(kconfig.Nicknames), kconfig.Preferences)
+		//for n := range kconfig.Nicknames {
+		//	logger.Debugf("Nickname: \"%s\"", n)
+		//}
 	}
 
 	if kconfig.Preferences.ReadKaliasConfig {
