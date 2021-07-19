@@ -23,7 +23,7 @@ var logger = common.CreateLogger("kconfig")
 
 const kconfigContextName = "kconfig_context"
 
-var kconfigTmpSessionDir = filepath.Join(os.TempDir(), "kconfig", "session")
+var kconfigTmpSessionDir = filepath.Join(os.TempDir(), "kconfig", "sessions")
 var kconfigTmpNicknameDir = filepath.Join(os.TempDir(), "kconfig", "nicks")
 
 // Kconfig describes the format of the ~/.kube/kconfig.yaml file.
@@ -38,8 +38,8 @@ type KconfigPreferences struct {
 	// nickname definition doesn't explicitly provide one.  If not specified, the default is "kubectl".
 	DefaultKubectl string `yaml:"default_kubectl,omitempty"`
 
-	// ChangePrompt says whether or not the kconfig subcommand emits shell code to modify the PS1
-	// shell variable.  If unspecified, the default is true.
+	// ChangePrompt says whether or not the kset subcommand emits shell code to modify the PS1 shell
+	// variable.  If unspecified, the default is true.
 	ChangePrompt *bool `yaml:"change_prompt,omitempty"`
 
 	// ShowOverridesInPrompt says whether or not "overrides" are included in the shell prompt, when
