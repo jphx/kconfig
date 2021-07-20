@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/jessevdk/go-flags"
@@ -10,8 +11,10 @@ import (
 )
 
 // parser is the command-line parser.  It is modified by init() functions of other files to add
-// subcommands and their options.
-var parser = flags.NewParser(&common.CommonOptions, flags.Default)
+// subcommands and their options.  We omit flags.PrintErrors from the options since this would
+// cause help output to go to stdout, whereas we want it to go to stderr, lest it be confused by
+// the caller as shell commands to issue.
+var parser = flags.NewParser(&common.CommonOptions, flags.HelpFlag|flags.PassDoubleDash) //
 var commandProcessor func(positionalArgs []string)
 var commandName string
 
@@ -30,6 +33,8 @@ func main() {
 func parseOptions() []string {
 	positionalArgs, err := parser.Parse()
 	if err != nil {
+		// Print errors, and even help output, to stderr.
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
