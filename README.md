@@ -17,6 +17,7 @@
   - [Use the go command to install](#use-the-go-command-to-install)
   - [Clone the repository and build it yourself](#clone-the-repository-and-build-it-yourself)
 - [Miscellaneous](#miscellaneous)
+  - [Does kconfig work with OpenShift?](#does-kconfig-work-with-openshift)
   - [Preventing an explosion of local kubectl configuration files](#preventing-an-explosion-of-local-kubectl-configuration-files)
   - [Do temporary configuration files need to be refreshed?](#do-temporary-configuration-files-need-to-be-refreshed)
   - [Is kconfig better than kalias?](#is-kconfig-better-than-kalias)
@@ -93,6 +94,7 @@ nicknames:
   dev-admin: --context dev --user admin
   stage: --kubeconfig /home/jph/clusters/staging-cluster -n application1
   prod: kubectl-1.20.2 ---kubeconfig /home/jph/clusters/production-cluster -n application1
+  modern: oc --context default/c114-e-uxxxx --namespace application1
 ```
 
 Once [installed](#installation), to switch the current command-line session to a given nickname,
@@ -476,6 +478,37 @@ Don't forget to source the setup shell script from your shell initialization fil
 
 The following sections address some miscellaneous questions that might arise.
 
+## Does kconfig work with OpenShift?
+
+The `oc login` command that you use to access an OpenShift cluster updates your `~/.kube/config`
+file to describe the cluster and user, and adds a context for the new cluster, and then makes it the
+current context.  This is an example of a cloud provider command that creates configuration
+information.  The `kconfig` package can definitely be used to access OpenShift clusters.  Here are
+some suggestions that may be useful when using OpenShift:
+
+1. You might consider specifying the `oc` executable as the "kubectl" program name in the nickname
+   definitions for your OpenShft clusters.  E.g.,
+   ```yaml
+   nicknames:
+     dev: oc --context default/c114-e-uxxxx --namespace application1
+   ```
+   This will cause the **kubectl** command to forward all invocations to `oc` instead of the default
+   `kubectl` program.  If _all_ the clusters you access are OpenShift, you can set the
+   `default_kubectl` preference to `oc` so that the `oc` program is used by default instead of
+   `kubectl`.  This isn't actually necessary, though, since the `kubectl` command can access
+   OpenShift clusters as well.  You don't need to do a lot of `oc project` commands, either, to
+   switch namespaces.
+
+2. If you like typing `oc` all the time instead of `kubectl`, you can copy or rename the version of
+   **kubectl** that is distributed with `kconfig` to the name `oc`, installing it in the `PATH`
+   earlier than the official `oc` program.
+
+3. If you used **kset** in your command-line session, run **koff** before using `oc login` to
+   refresh your configuration.  The reason is that `oc login` appears to update the _first_ file
+   mentioned in the `KUBECONFIG` environment variable instead of the last, so instead of updating
+   the "permanent" configuration file, it would update the temporary one instead.  This probably
+   isn't what you want.
+
 ## Preventing an explosion of local kubectl configuration files
 
 Temporary `kubectl` configuration files are created on two occasions:
@@ -511,6 +544,12 @@ user name.  Unless your cloud provider command changes one of these in your base
 files, it shouldn't be necessary to run **kset** after updating them.  If, however, one of these
 things change, then yes, you should run the **kset** command again to refresh the local
 configuration file.
+
+**Beware:** Some cloud provider commands update the file referenced by the _first_ entry in the
+`KUBECONFIG` environment variable instead of the last.  The `oc login` command appears to behave
+this way.  If the command you use to refresh your configuration is one of these, be sure to run
+**koff** before executing the command that refreshes your configuration, so the command won't update
+the temporary file instead of the file containing the long-term configuration.
 
 ## Is kconfig better than kalias?
 
