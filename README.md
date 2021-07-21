@@ -19,6 +19,7 @@
 - [Miscellaneous](#miscellaneous)
   - [Preventing an explosion of local kubectl configuration files](#preventing-an-explosion-of-local-kubectl-configuration-files)
   - [Do temporary configuration files need to be refreshed?](#do-temporary-configuration-files-need-to-be-refreshed)
+  - [Is kconfig better than kalias?](#is-kconfig-better-than-kalias)
   - [How can I use a shortened command name like just "k"?](#how-can-i-use-a-shortened-command-name-like-just-k)
 
 # Conveniently switch between different Kubernetes clusters and namespaces
@@ -510,6 +511,13 @@ user name.  Unless your cloud provider command changes one of these in your base
 files, it shouldn't be necessary to run **kset** after updating them.  If, however, one of these
 things change, then yes, you should run the **kset** command again to refresh the local
 configuration file.
+
+## Is kconfig better than kalias?
+
+The older [kalias](https://github.com/jphx/kalias) utility is a small program that attempted to
+provide a similar capability, but its simplicity kept it from working in a variety of circumstances.
+A discussion of the benefits of `kconfig` is available in
+[Comparing kconfig with kalias](https://github.com/jphx/kconfig/wiki/Comparing-kconfig-with-kalias).
 
 ## How can I use a shortened command name like just "k"?
 
