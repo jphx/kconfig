@@ -48,6 +48,8 @@ func koffProcessor(positionalArgs []string) {
 	} else {
 		fmt.Println("unset KUBECONFIG")
 	}
+
+	// The koff shell function will unset the _KCONFIG_KUBECTL environment variable.
 }
 
 func init() {
