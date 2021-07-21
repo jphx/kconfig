@@ -12,6 +12,9 @@ lint: ## Run golint against code.
 build: fmt vet ## Build manager binary.
 	go build -o bin/ ./...
 
+test: build
+	go test ./...
+
 install:
 	go install ./...
 

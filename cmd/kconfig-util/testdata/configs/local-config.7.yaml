@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Config
+preferences: {}
+clusters: null
+contexts:
+  - context:
+      cluster: test2
+      namespace: testing-namespace
+      user: testuser2
+    name: kconfig_context
+current-context: kconfig_context
+users: null

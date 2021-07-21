@@ -292,17 +292,30 @@ var casesToTest = []TestCase{
 		ExpectLocalConfigFile: "5",
 	},
 	{
+		Name: "Different kubectl config with context",
+		Preferences: config.KconfigPreferences{
+			BaseKubeconfig: "$HOME/.kube/missing.config",
+		},
+		CopyKconfigYaml:       true,
+		CopyKaliasTxt:         false,
+		Arguments:             []string{"dev-with-kubeconfig-and-context"},
+		ExpectKubeconfig:      ".kube/testing.config",
+		ExpectKubectlExe:      "kubectl",
+		ExpectPrompt:          "dev-with-kubeconfig-and-context",
+		ExpectLocalConfigFile: "6",
+	},
+	{
 		Name: "Different kubectl config with namespace",
 		Preferences: config.KconfigPreferences{
 			BaseKubeconfig: "$HOME/.kube/missing.config",
 		},
 		CopyKconfigYaml:       true,
 		CopyKaliasTxt:         false,
-		Arguments:             []string{"dev-with-kubeconfig-namespace"},
+		Arguments:             []string{"dev-with-kubeconfig-and-context-and-namespace"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
-		ExpectPrompt:          "dev-with-kubeconfig-namespace",
-		ExpectLocalConfigFile: "6",
+		ExpectPrompt:          "dev-with-kubeconfig-and-context-and-namespace",
+		ExpectLocalConfigFile: "7",
 	},
 }
 

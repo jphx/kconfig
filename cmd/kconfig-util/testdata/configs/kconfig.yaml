@@ -13,5 +13,6 @@ nicknames:
   bad-option: --bad-option foo
   dev-with-executable: kubectl-99 --context dev
   dev-assume-testing: --context test
-  dev-with-kubeconfig: --context test --kubeconfig $HOME/.kube/testing.config
-  dev-with-kubeconfig-namespace: --context test --kubeconfig $HOME/.kube/testing.config -n testing-namespace
+  dev-with-kubeconfig: --kubeconfig $HOME/.kube/testing.config
+  dev-with-kubeconfig-and-context: --context test2 --kubeconfig $HOME/.kube/testing.config
+  dev-with-kubeconfig-and-context-and-namespace: --context test2 --kubeconfig $HOME/.kube/testing.config -n testing-namespace
