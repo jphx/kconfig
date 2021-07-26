@@ -22,6 +22,7 @@
   - [Do temporary configuration files need to be refreshed?](#do-temporary-configuration-files-need-to-be-refreshed)
   - [Is kconfig better than kalias?](#is-kconfig-better-than-kalias)
   - [How can I use a shortened command name like just "k"?](#how-can-i-use-a-shortened-command-name-like-just-k)
+  - [Unexpected changes to the kubectl configuration file](#unexpected-changes-to-the-kubectl-configuration-file)
 
 # Conveniently switch between different Kubernetes clusters and namespaces
 
@@ -568,3 +569,20 @@ to use a shortened name like `k`.  You can certainly do this.  I would recommend
 symbolic link in a directory in your `PATH`, linking to the **kubectl** program that is distributed
 with the `kconfig` package.  That way you can use `k` or `kubectl` when you type commands, and any
 other programs that run the full `kubectl` name work fine as well.
+
+## Unexpected changes to the kubectl configuration file
+
+You may notice that the current context of your `~/.kube/config` file occasionally gets changed to
+`kconfig_context`, which is the context name that `kconfig` uses for the temporary context it
+creates in a session-local `kubectl` configuration file.  This change to the `~/.kube/config` file
+is _not_ being made by `kconfig`.  Investigation reveals that it seems to be done by the `kubectl`
+utility during normal commands (e.g., `kubectl get pods`) when using the `oidc` authentication
+provider.  Sometimes `kubectl` finds it necessary to refresh the authentication token for the user.
+But instead of modifying just the `user` section of the configuration file, it also seems to copy
+the current context from the first file in the `KUBECONFIG` path into the `~/.kube/config` file.  I
+don't know if there's a good reason for this.  It could be bug.  I don't know how to prevent it.
+
+If you rely on the current context setting in your `~/.kube/config` file, then this behavior is
+troublesome.  But if you always use `kset` to set your current context before running `kubectl`
+commands, then the current context setting in the `~/.kube/config` file will never be used, so this
+behavior isn't an issue.
