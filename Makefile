@@ -1,4 +1,4 @@
-VERSION:=0.9.0
+VERSION:=1.0.0
 
 all: build
 
@@ -36,4 +36,4 @@ define platform-build
 	tar czf dist/kconfig-${VERSION}-$1-$2.tar.gz -C dist/work .
 endef
 
-.PHONY: all fmt vet lint build test install dist
+.PHONY: all help fmt vet lint build test install dist

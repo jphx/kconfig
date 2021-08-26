@@ -25,7 +25,10 @@ func main() {
 	if kubectlExecutable == "" {
 		kubectlExecutable = os.Getenv("_KCONFIG_KUBECTL")
 		if kubectlExecutable == "" {
-			kubectlExecutable = "kubectl"
+			kubectlExecutable = config.GetKconfig().Preferences.DefaultKubectl
+			if kubectlExecutable == "" {
+				kubectlExecutable = "kubectl"
+			}
 		}
 	}
 

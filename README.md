@@ -373,7 +373,8 @@ that is set by the **kset** command.  The value is the name of the real `kubectl
 for the current session.  The `kconfig` version of **kubectl** searches for this name in the `PATH`
 and does an `exec` operation to run it.  The `exec` operation replaces the process image with the
 target version of `kubectl`, which executes your command.  If the environment variable isn't set,
-it searches for the name `kubectl`, skipping itself, and runs that program.
+it searches for the default `kubectl` executable name specified in the `kconfig.yaml` preferences,
+or if that's not specified, the name `kubectl` (skipping itself), and then runs that program.
 
 The second useful feature of the **kubectl** program that is distributed with `kconfig` is that it
 accepts, _as the first option only_, the **-k** (**--kconfig**) option to provide a `kconfig`
@@ -383,7 +384,7 @@ current command-line environment when this option is used.  For example:
 
 ```bash
 kubectl -k dev get pods
-kubectl --kalias dev get pods
+kubectl --kconfig dev get pods
 ```
 
 # Installation
