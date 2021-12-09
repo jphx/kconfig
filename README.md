@@ -18,6 +18,7 @@
   - [Clone the repository and build it yourself](#clone-the-repository-and-build-it-yourself)
 - [Miscellaneous](#miscellaneous)
   - [Does kconfig work with OpenShift?](#does-kconfig-work-with-openshift)
+  - [Does kconfig work with Teleport?](#does-kconfig-work-with-teleport)
   - [Preventing an explosion of local kubectl configuration files](#preventing-an-explosion-of-local-kubectl-configuration-files)
   - [Do temporary configuration files need to be refreshed?](#do-temporary-configuration-files-need-to-be-refreshed)
   - [Is kconfig better than kalias?](#is-kconfig-better-than-kalias)
@@ -511,6 +512,42 @@ some suggestions that may be useful when using OpenShift:
    the "permanent" configuration file, it would update the temporary one instead.  This probably
    isn't what you want.
 
+## Does kconfig work with Teleport?
+
+A [Teleport](https://goteleport.com/how-it-works/) server is sometimes used to control access to
+Kubernetes clusters.  If your organization does this, you can still use `kconfig`.  The `tsh login`
+command seems to populate the `~/.kube/config` file with a single `cluster` definition that routes
+everything through the Teleport server, and a `context` and `user` definition for _every_ cluster
+that's available through that Teleport server.  The `tsh kube login` command doesn't seem to do much
+except switch the currently-active context in `~/.kube/config`, so it doesn't seem to really be
+necessary at all if you're willing to type the `--context` option on **kubectl** commands or if you
+want to use `kconfig` to set the context for you.  For example, if the `tsh login` command creates
+these `context` entries:
+
+- `dev-us-east-bastion-cluster1`
+- `dev-us-east-bastion-cluster2`
+
+then you can reference these entries on `--context` options in your `kconfig` definitions.  If
+you're not sure what the correct context name to use for a given cluster is, you can issue a
+`tsh kube login` command once for the cluster and then use the command:
+```bash
+kubectl config current-context
+```
+to list the context name that it selected.  These names appear to be persistent.  Later `tsh login`
+commands will use the same name, so you don't have to worry about updating the
+`~/.kube/kconfig.yaml` file very time you use `tsh login`.
+
+Note that you'll be restricted to concurrently accessing Kubernetes clusters that are available
+through the _same_ Teleport server.  With a little extra work, however, you can arrange to access
+clusters that use _different_ Teleport servers from different command sessions at the same time.
+After logging into a cluster with `tsh kube login` you can run the `tsh env` command to output some
+environment variables you can set to "pin" a particular cluster to a command session, using much the
+same technique as `kconfig`, actually.  You can either set all these environment variables by
+sourcing the output of `tsh env`, which elimininates the need for using `kconfig` for this command
+session, or set just the `TELEPORT_PROXY` environment variable and continue to use `kconfig`.  It's
+possible a future update to `kconfig` will set the `TELEPORT_PROXY` environment variable
+automatically, but presently it doesn't, so you would have to do it manually.
+
 ## Preventing an explosion of local kubectl configuration files
 
 Temporary `kubectl` configuration files are created on two occasions:
@@ -565,7 +602,7 @@ A discussion of the benefits of `kconfig` is available in
 The `kconfig` package is intentionally designed to allow the user to run the normal **kubectl**
 command to access a Kubernetes cluster.  This ensures that third-party shell scripts can target the
 desired environment.  There isn't a different frontend program, and there isn't anything like a
-shell alias to use.  But repeately typing `kubectl` all day can be inefficient, so some users prefer
+shell alias to use.  But repeately typing `kubectl` all day can be tiresome, so some users prefer
 to use a shortened name like `k`.  You can certainly do this.  I would recommend creating a `k`
 symbolic link in a directory in your `PATH`, linking to the **kubectl** program that is distributed
 with the `kconfig` package.  That way you can use `k` or `kubectl` when you type commands, and any
