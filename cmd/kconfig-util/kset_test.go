@@ -32,6 +32,7 @@ type TestCase struct {
 	ExpectKubectlExe      string
 	ExpectPrompt          string
 	ExpectLocalConfigFile string
+	ExpectTeleportProxy   string
 }
 
 var casesToTest = []TestCase{
@@ -317,6 +318,18 @@ var casesToTest = []TestCase{
 		ExpectPrompt:          "dev-with-kubeconfig-and-context-and-namespace",
 		ExpectLocalConfigFile: "7",
 	},
+	{
+		Name:                  "Simple nickname with Teleport proxy",
+		Preferences:           config.KconfigPreferences{},
+		CopyKconfigYaml:       true,
+		CopyKaliasTxt:         false,
+		Arguments:             []string{"dev-with-teleport-proxy"},
+		ExpectKubeconfig:      ".kube/config",
+		ExpectKubectlExe:      "kubectl",
+		ExpectPrompt:          "dev-with-teleport-proxy",
+		ExpectLocalConfigFile: "1",
+		ExpectTeleportProxy:   "tport-proxy1",
+	},
 }
 
 var testHomeDir string
@@ -346,6 +359,7 @@ func TestMain(m *testing.M) {
 }
 
 var extractKubeconfigEnvVar = regexp.MustCompile(`(?m)^export KUBECONFIG=(.*)$`)
+var extractTeleportProxyEnvVar = regexp.MustCompile(`(?m)^export TELEPORT_PROXY=(.*)$`)
 var extractKubectlExe = regexp.MustCompile(`(?m)^export _KCONFIG_KUBECTL=(.*)$`)
 var extractPrompt = regexp.MustCompile(`(?m)^_KP=(.*)$`)
 
@@ -427,6 +441,10 @@ func TestKsetResults(t *testing.T) {
 				return
 			}
 
+			if verifyTeleportProxyEnvVar(t, output, &testCase) {
+				return
+			}
+
 			if verifyKubectlExe(t, output, &testCase) {
 				return
 			}
@@ -477,6 +495,28 @@ func verifyKubeconfigEnvVar(t *testing.T, output string, testCase *TestCase) (st
 	// Return the first element, which is the local kubectl config file, so the caller can examine
 	// it to make sure it's correct.
 	return searchPath[0], false
+}
+
+func verifyTeleportProxyEnvVar(t *testing.T, output string, testCase *TestCase) bool {
+	match := extractTeleportProxyEnvVar.FindStringSubmatch(output)
+	if match == nil {
+		if testCase.ExpectTeleportProxy == "" {
+			return false
+		}
+		t.Log("Couldn't find the TELEPORT_PROXY environment variable in the output.")
+		t.Logf("output: %s", output)
+		t.Fail()
+		return true
+	}
+	value := match[1]
+	if value != testCase.ExpectTeleportProxy {
+		t.Log("The TELEPORT_PROXY environment variable is not as expected.")
+		t.Logf("Expected: %s", testCase.ExpectTeleportProxy)
+		t.Logf("Actual  : %s", value)
+		t.Fail()
+		return true
+	}
+	return false
 }
 
 func verifyKubectlExe(t *testing.T, output string, testCase *TestCase) bool {

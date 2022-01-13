@@ -490,7 +490,7 @@ information.  The `kconfig` package can definitely be used to access OpenShift c
 some suggestions that may be useful when using OpenShift:
 
 1. You might consider specifying the `oc` executable as the "kubectl" program name in the nickname
-   definitions for your OpenShft clusters.  E.g.,
+   definitions for your OpenShift clusters.  E.g.,
    ```yaml
    nicknames:
      dev: oc --context default/c114-e-uxxxx --namespace application1
@@ -515,7 +515,8 @@ some suggestions that may be useful when using OpenShift:
 ## Does kconfig work with Teleport?
 
 A [Teleport](https://goteleport.com/how-it-works/) server is sometimes used to control access to
-Kubernetes clusters.  If your organization does this, you can still use `kconfig`.  The `tsh login`
+Kubernetes clusters.  If your organization does this, you can still use `kconfig`, and in fact
+`kconfig` provides some enhanced support for Teleport.  The `tsh login`
 command seems to populate the `~/.kube/config` file with a single `cluster` definition that routes
 everything through the Teleport server, and a `context` and `user` definition for _every_ cluster
 that's available through that Teleport server.  The `tsh kube login` command doesn't seem to do much
@@ -537,16 +538,30 @@ to list the context name that it selected.  These names appear to be persistent.
 commands will use the same name, so you don't have to worry about updating the
 `~/.kube/kconfig.yaml` file very time you use `tsh login`.
 
-Note that you'll be restricted to concurrently accessing Kubernetes clusters that are available
+Note that if you stop there you'll be restricted to concurrently accessing Kubernetes clusters that are available
 through the _same_ Teleport server.  With a little extra work, however, you can arrange to access
 clusters that use _different_ Teleport servers from different command sessions at the same time.
 After logging into a cluster with `tsh kube login` you can run the `tsh env` command to output some
 environment variables you can set to "pin" a particular cluster to a command session, using much the
-same technique as `kconfig`, actually.  You can either set all these environment variables by
-sourcing the output of `tsh env`, which elimininates the need for using `kconfig` for this command
-session, or set just the `TELEPORT_PROXY` environment variable and continue to use `kconfig`.  It's
-possible a future update to `kconfig` will set the `TELEPORT_PROXY` environment variable
-automatically, but presently it doesn't, so you would have to do it manually.
+same technique as `kconfig`, actually.  The idea is that you set all these environment variables by
+sourcing the output of `tsh env`.  The `TELEPORT_PROXY` environment variable is the important one to
+set to tell Teleport what server to use for proxying.  The `kconfig` utility, therefore, includes
+support for setting the `TELEPORT_PROXY` environment variable during `kset` and unsetting it during
+`koff`.  The way to do this is to include a `--teleport-proxy` option in your `kconfig` definitions.
+(This is an artificial option, of course, since `kubectl` doesn't define such an option.  It's a
+special option that just `kconfig` processes.)  To give an example, the following definition says to
+use a certain context created by the `tsh login` command, and also asks `kconfig` to manage the
+`TELEPORT_PROXY` environment variable during context switches.
+```yaml
+nicknames:
+  dev: --context dev-us-east-bastion-cluster1 --namespace myproject --teleport-proxy d5aab71fda3e16d77450e3abb5c7e154-7ax0jfpn.bastion.sample.com:443
+```
+Note that when using Teleport, you're still responsible for issuing the `tsh login` commands as
+necessary.  When you do this, be sure to do it when there's no `kset` in effect, otherwise the
+`tsh login` command may end up updating the context-specific `kubectl` configuration file instead of
+your base file.  If you use a separate utility to execute `tsh login`, you can always just unset the
+`KUBECONFIG` environment variable before executing `tsh login`.  Then you can run the utility even
+when a `kset` context is in effect.
 
 ## Preventing an explosion of local kubectl configuration files
 
@@ -589,6 +604,9 @@ configuration file.
 this way.  If the command you use to refresh your configuration is one of these, be sure to run
 **koff** before executing the command that refreshes your configuration, so the command won't update
 the temporary file instead of the file containing the long-term configuration.
+If you use a separate utility to refresh your configuration files, you can always just unset the
+`KUBECONFIG` environment variable in the utility beforehand.  Then you can run the utility even when
+a `kset` context is in effect.
 
 ## Is kconfig better than kalias?
 

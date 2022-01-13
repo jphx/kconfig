@@ -16,3 +16,4 @@ nicknames:
   dev-with-kubeconfig: --kubeconfig $HOME/.kube/testing.config
   dev-with-kubeconfig-and-context: --context test2 --kubeconfig $HOME/.kube/testing.config
   dev-with-kubeconfig-and-context-and-namespace: --context test2 --kubeconfig $HOME/.kube/testing.config -n testing-namespace
+  dev-with-teleport-proxy: --context dev --teleport-proxy tport-proxy1

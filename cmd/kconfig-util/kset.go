@@ -36,16 +36,22 @@ func (o *ksetCommandOptions) Execute(args []string) error {
 
 func ksetProcessor(positionalArgs []string) {
 	nickname := positionalArgs[0]
-	kubeconfig, kubectlExecutable, overrides := config.CreateLocalKubectlConfigFile(nickname, &ksetOptions.KconfigOptions, true)
+	createResults := config.CreateLocalKubectlConfigFile(nickname, &ksetOptions.KconfigOptions, true)
 
 	// Print to standard output any shell operations that should be performed.
-	fmt.Printf("export KUBECONFIG=%s\n", kubeconfig)
+	fmt.Printf("export KUBECONFIG=%s\n", createResults.NewKubeconfigEnvVar)
+
+	// If the user is using Teleport, see if they've asked for us to set the TELEPORT_PROXY
+	// environment variable that Teleport uses when it proxies a Kubernetes connection.
+	if createResults.TeleportProxyEnvVar != "" {
+		fmt.Printf("export TELEPORT_PROXY=%s\n", createResults.TeleportProxyEnvVar)
+	}
 
 	kconfig := config.GetKconfig()
 	if kconfig.Preferences.ChangePrompt == nil || *kconfig.Preferences.ChangePrompt {
 		promptPrefix := nickname
-		if overrides != "" && (kconfig.Preferences.ShowOverridesInPrompt == nil || *kconfig.Preferences.ShowOverridesInPrompt) {
-			promptPrefix = fmt.Sprintf("%s[%s]", nickname, overrides)
+		if createResults.OverridesDescription != "" && (kconfig.Preferences.ShowOverridesInPrompt == nil || *kconfig.Preferences.ShowOverridesInPrompt) {
+			promptPrefix = fmt.Sprintf("%s[%s]", nickname, createResults.OverridesDescription)
 		}
 
 		// Emit a temporary shell variable that describes the prefix to use on the shell prompt.
@@ -53,7 +59,7 @@ func ksetProcessor(positionalArgs []string) {
 	}
 
 	// Set an environment variable used by the kubectl executable included with this package.
-	fmt.Printf("export _KCONFIG_KUBECTL=%s\n", kubectlExecutable)
+	fmt.Printf("export _KCONFIG_KUBECTL=%s\n", createResults.KubectlExecutable)
 
 	// Set an environment variable that says what nickname is in effect.
 	//fmt.Printf("export _KCONFIG_NICKNAME=%s\n", nickname)

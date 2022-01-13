@@ -58,10 +58,11 @@ type KconfigPreferences struct {
 
 // KconfigOptions describes the options that can appear in the kconfig nickname definition
 type KconfigOptions struct {
-	KubeConfig string `long:"kubeconfig" value-name:"FILE" description:"Path to the kubectl config file to use.  If not specified, the default is ~/.kube/config."`
-	Context    string `long:"context" value-name:"NAME" description:"The name of the context to use from the kubectl config file.  If not specified, the default context is used."`
-	Namespace  string `short:"n" long:"namespace" value-name:"NAME" description:"The namespace to use.  If not specified, the namespace associated the specified or default context is used."`
-	User       string `long:"user" value-name:"NAME" description:"The user name to use.  If not specified, the user associated the specified or default context is used."`
+	KubeConfig    string `long:"kubeconfig" value-name:"FILE" description:"Path to the kubectl config file to use.  If not specified, the default is ~/.kube/config."`
+	Context       string `long:"context" value-name:"NAME" description:"The name of the context to use from the kubectl config file.  If not specified, the default context is used."`
+	Namespace     string `short:"n" long:"namespace" value-name:"NAME" description:"The namespace to use.  If not specified, the namespace associated the specified or default context is used."`
+	User          string `long:"user" value-name:"NAME" description:"The user name to use.  If not specified, the user associated the specified or default context is used."`
+	TeleportProxy string `long:"teleport-proxy" value-name:"PROXYHOST" description:"The Teleport host and optionally the port to use with context.  This is used to set the TELEPORT_PROXY environment variable."`
 }
 
 func getHomeDirectory() string {
@@ -246,6 +247,16 @@ func parseNicknameDefinition(definition string) (*KconfigOptions, string) {
 	return &kconfigOptions, kubectlExecutable
 }
 
+// CreateConfigResults holds information resulting from a call to CreateLocalKubectlConfigFile(),
+// since that function has several items of information to return.  This is cleaner than returning
+// a long tuple of items.
+type CreateConfigResults struct {
+	NewKubeconfigEnvVar  string
+	TeleportProxyEnvVar  string
+	KubectlExecutable    string
+	OverridesDescription string
+}
+
 // CreateLocalKubectlConfigFile creates or replaces a local kubectl configuration file.  To figure
 // out what information to put in the file, it uses the provided nickname and any override options.
 // To create a session-local file, specify sessionFile as true.  In this case, the file name will be
@@ -256,7 +267,7 @@ func parseNicknameDefinition(definition string) (*KconfigOptions, string) {
 // returned, as well as the kubectl executable that should be used for this nickname, and a short
 // description of any overrides used (in case the caller want that information for the shell
 // prompt).
-func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOptions, sessionFile bool) (string, string, string) {
+func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOptions, sessionFile bool) *CreateConfigResults {
 	if !sessionFile {
 		if kconfigOptions != nil {
 			panic("Call to CreateLocalKubectlConfigFile specified a non-nil KconfigOptions")
@@ -438,7 +449,21 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 	}
 
 	newKubeconfigEnvVar := fmt.Sprintf("%s%c%s", localConfigFilename, os.PathListSeparator, searchPath)
-	return newKubeconfigEnvVar, kubectlExecutable, strings.Join(overrides, ",")
+
+	var teleportProxyEnvVar string
+	if nicknameOptions.TeleportProxy != "" {
+		teleportProxyEnvVar = nicknameOptions.TeleportProxy
+	}
+	if kconfigOptions.TeleportProxy != "" {
+		teleportProxyEnvVar = kconfigOptions.TeleportProxy
+	}
+
+	return &CreateConfigResults{
+		NewKubeconfigEnvVar:  newKubeconfigEnvVar,
+		TeleportProxyEnvVar:  teleportProxyEnvVar,
+		KubectlExecutable:    kubectlExecutable,
+		OverridesDescription: strings.Join(overrides, ","),
+	}
 }
 
 // GetExistingSessionLocalFilename parses the passed value, which is interpreted as a KUBECONFIG

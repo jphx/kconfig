@@ -32,7 +32,7 @@ function koff() {
    fi
 
    # More cleanup
-   unset _KCONFIG_KUBECTL
+   unset _KCONFIG_KUBECTL TELEPORT_PROXY
 }
 
 # The main kset command.  See the prologue comments.

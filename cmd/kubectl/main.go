@@ -66,17 +66,27 @@ func maybeCreateLocalConfigFile(argsToPassToKubectl []string) ([]string, string)
 
 	argsToPassToKubectl = argsToPassToKubectl[2:]
 
-	kubeconfig, kubectlExecutable, _ := config.CreateLocalKubectlConfigFile(nickname, nil, false)
+	createResults := config.CreateLocalKubectlConfigFile(nickname, nil, false)
 
 	// Set the KUBECONFIG environment variable, which will be in the environment passed to the
 	// kubectl executable.  This will cause it to use this local kubectl configuration file.
-	err := os.Setenv("KUBECONFIG", kubeconfig)
+	err := os.Setenv("KUBECONFIG", createResults.NewKubeconfigEnvVar)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "The kconfig nickname is missing after the \"%s\" option.", firstArg)
 		os.Exit(1)
 	}
 
-	return argsToPassToKubectl, kubectlExecutable
+	// If the user is using Teleport, see if they've asked for us to set the TELEPORT_PROXY
+	// environment variable that Teleport uses when it proxies a Kubernetes connection.
+	if createResults.TeleportProxyEnvVar != "" {
+		err := os.Setenv("TELEPORT_PROXY", createResults.TeleportProxyEnvVar)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error setting the TELEPORT_PROXY environment variable: %s", err)
+			os.Exit(1)
+		}
+	}
+
+	return argsToPassToKubectl, createResults.KubectlExecutable
 }
 
 func findExecutable(name string, skip string) (string, error) {
