@@ -227,6 +227,10 @@ preferences:
   # If unspecified, the default is true.
   show_overrides_in_prompt: false
 
+  	# Says whether or not the Kubernetes namespace should always be included in the shell prompt,
+   # when the prompt is being modified.  If unspecified, the default is false.
+	always_show_namespace_in_prompt: true
+
   # Says whether or not kset will look in the ~/.kube/kalias.txt file as a source of nicknames.
   # This is to make it easier to migrate from the older kalias utility.  The default is false,
   # unless the ~/.kube/kconfig.yaml file doesn't exist, in which cases it's true.

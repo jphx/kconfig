@@ -46,6 +46,11 @@ type KconfigPreferences struct {
 	// it's being modified.  If unspecified, the default is true.
 	ShowOverridesInPrompt *bool `yaml:"show_overrides_in_prompt,omitempty"`
 
+	// AlwaysShowNamespaceInPrompt says whether or not the Kubernetes namespace should always be
+	// included in the shell prompt, when the prompt is being modified.  If unspecified, the default
+	// is false.
+	AlwaysShowNamespaceInPrompt bool `yaml:"always_show_namespace_in_prompt,omitempty"`
+
 	// ReadKaliasConfig says whether or not we'll look for the ~/.kube/kalias.txt file as a source
 	// of nicknames.  The default is false, unless the ~/.kube/kconfig.yaml file doesn't exist, in
 	// which cases it's true.
@@ -255,12 +260,13 @@ type CreateConfigResults struct {
 	TeleportProxyEnvVar  string
 	KubectlExecutable    string
 	OverridesDescription string
+	ContextNamespace     string
 }
 
 // CreateLocalKubectlConfigFile creates or replaces a local kubectl configuration file.  To figure
 // out what information to put in the file, it uses the provided nickname and any override options.
 // To create a session-local file, specify sessionFile as true.  In this case, the file name will be
-// derived from the current KUBECONFIG environment variable, or if one isn't named that, created
+// derived from the current KUBECONFIG environment variable, or if one isn't named there, created
 // with a random name.  When creating a non-session-local file, specify kconfigOptions as nil, since
 // overrides are not allowed in that case.  If an error occurs, the process is exited with an error
 // message.  On success, the new value to be used as the KUBECONFIG environment variable is
@@ -343,6 +349,13 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 		os.Exit(1)
 	}
 
+	// Keep track of the effective namespace, in case the user always wants to show the namespace
+	// in the prompt.
+	contextNamespace := contextDefn.Namespace
+	if contextNamespace == "" {
+		contextNamespace = "default"
+	}
+
 	// See if our new config file can be a simple "current-context" entry or if it must define
 	// a new context so that namespace or user can be overridden.
 	needNewContext := nicknameOptions.Namespace != "" || nicknameOptions.User != "" ||
@@ -364,9 +377,11 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 		// Set the namespace
 		if nicknameOptions.Namespace != "" {
 			newContext.Namespace = nicknameOptions.Namespace
+			contextNamespace = nicknameOptions.Namespace
 		}
 		if kconfigOptions.Namespace != "" {
 			newContext.Namespace = kconfigOptions.Namespace
+			contextNamespace = kconfigOptions.Namespace
 			overrides = append(overrides, fmt.Sprintf("ns=%s", kconfigOptions.Namespace))
 		}
 
@@ -463,6 +478,7 @@ func CreateLocalKubectlConfigFile(nickname string, kconfigOptions *KconfigOption
 		TeleportProxyEnvVar:  teleportProxyEnvVar,
 		KubectlExecutable:    kubectlExecutable,
 		OverridesDescription: strings.Join(overrides, ","),
+		ContextNamespace:     contextNamespace,
 	}
 }
 

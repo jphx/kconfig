@@ -2,11 +2,13 @@
 #  default_kubectl: xxx
 #  change_prompt: false
 #  show_overrides_in_prompt: false
+#  always_show_namespace_in_prompt: true
 #  read_kalias_config: true
 #  base_kubeconfig: xxx
 
 nicknames:
   dev: --context dev
+  dev-no-namespace-in-context: --context devnonamespace
   dev-namespace: --context dev --namespace namespace-override
   dev-user: --context dev --user devuser2
   dev-namespace-user: --context dev -n namespace-override --user devuser2

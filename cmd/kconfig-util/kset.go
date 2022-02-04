@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jphx/kconfig/config"
 )
@@ -51,7 +52,13 @@ func ksetProcessor(positionalArgs []string) {
 	if kconfig.Preferences.ChangePrompt == nil || *kconfig.Preferences.ChangePrompt {
 		promptPrefix := nickname
 		if createResults.OverridesDescription != "" && (kconfig.Preferences.ShowOverridesInPrompt == nil || *kconfig.Preferences.ShowOverridesInPrompt) {
+			if kconfig.Preferences.AlwaysShowNamespaceInPrompt && !strings.Contains(createResults.OverridesDescription, "ns=") {
+				createResults.OverridesDescription = fmt.Sprintf("ns=%s,%s", createResults.ContextNamespace, createResults.OverridesDescription)
+			}
 			promptPrefix = fmt.Sprintf("%s[%s]", nickname, createResults.OverridesDescription)
+
+		} else if kconfig.Preferences.AlwaysShowNamespaceInPrompt {
+			promptPrefix = fmt.Sprintf("%s[ns=%s]", nickname, createResults.ContextNamespace)
 		}
 
 		// Emit a temporary shell variable that describes the prefix to use on the shell prompt.
