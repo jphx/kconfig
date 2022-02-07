@@ -14,14 +14,17 @@ vet: ## Run go vet against code.
 lint: ## Run golint against code.
 	golint ./...
 
+# The following go build command passes a build-time variable to the linker.
+# https://belief-driven-design.com/build-time-variables-in-go-51439b26ef9/
+
 build: fmt vet ## Build manager binary.
-	go build -o bin/ ./...
+	go build -o bin/ -ldflags="-X github.com/jphx/kconfig/common.Version=${VERSION}" ./...
 
 test: build ## Run unit tests.
 	go test ./...
 
 install: ## Build and install executable programs locally.
-	go install ./...
+	go install -ldflags="-X github.com/jphx/kconfig/common.Version=${VERSION}" ./...
 
 dist: ## Create distributable tar files for Linux and MacOS.
 	@mkdir -p dist/work

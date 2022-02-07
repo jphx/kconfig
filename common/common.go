@@ -2,6 +2,12 @@ package common
 
 import "go.uber.org/zap"
 
+// Version contains the kconfig version.  It's used by the "version" subcommand.  It's intended to
+// be set as a build-time option using the "ldflags" option to "go build".  E.g.,
+//
+// go build -o bin/ -ldflags="-X github.com/jphx/kconfig/common.Version=${VERSION}" ./...
+var Version string
+
 // CommonOptions describes the command-line options for the program that are common to all
 // subcommands.
 var CommonOptions struct {

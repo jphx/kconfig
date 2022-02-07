@@ -227,9 +227,9 @@ preferences:
   # If unspecified, the default is true.
   show_overrides_in_prompt: false
 
-  	# Says whether or not the Kubernetes namespace should always be included in the shell prompt,
-   # when the prompt is being modified.  If unspecified, the default is false.
-	always_show_namespace_in_prompt: true
+  # Says whether or not the Kubernetes namespace should always be included in the shell prompt,
+  # when the prompt is being modified.  If unspecified, the default is false.
+  always_show_namespace_in_prompt: true
 
   # Says whether or not kset will look in the ~/.kube/kalias.txt file as a source of nicknames.
   # This is to make it easier to migrate from the older kalias utility.  The default is false,
@@ -251,6 +251,7 @@ preferences:
 #  --context CONTEXT-NAME
 #  -n NAMESPACE-NAME (--namespace NAMESPACE-NAME)
 #  --user USER-NAME
+#  --teleport-proxy PROXY-HOST
 # The first token of the string is considered to be the executable name if it doesn't start with
 # a dash (-).
 nicknames:
@@ -262,18 +263,22 @@ nicknames:
 # The commands
 
 Once you [install](#installation) kconfig and run the setup script in the current shell -- most
-likely from your `~/.bashrc` script -- a number of shell functions will then be available that you
-use like commands.  They're provided as shell functions so that they can manipulate settings of the
-current shell, like the environment variable `KUBECONFIG` and the shell variable `PS1`.  The shell
-functions themselves are simple.  The implementations generally invoke the `kconfig-util` command to
-do the real work.
+likely from your `~/.bashrc` script (Linux) or `~/.zshrc` script (macOS) -- a number of shell
+functions will then be available that you use like commands.  They're provided as shell functions so
+that they can manipulate settings of the current shell, like the environment variable `KUBECONFIG`
+and the shell variable `PS1`.  The shell functions themselves are simple.  The implementations
+generally invoke the `kconfig-util` command to do the real work.
 
 These are the shell functions intended for users:
 
 - **kset**: Switch to the Kubernetes cluster selected by the given nickname.
 - **koff**: Clear any settings from the current command shell that were made by **kset**.
 
-These are describe in detail in the following sections.
+These are described in detail in the following sections.
+
+You can also use these subcommands of `kconfig-util`:
+
+- **version**: Print the version of `kconfig`.
 
 ## kset - set up the environment to access a nickname
 
@@ -281,23 +286,39 @@ The **kset** command is the one you'll use most often.  It makes changes to the 
 in which you type the command to configure **kubectl** to access the Kubernetes cluster, context,
 namespace, etc., that you describe in your nickname definition. The syntax is:
 
-    kset nickname [options]
+    kset [nickname|-] [options]
 
 where `nickname` is one of the nicknames from your `kconfig.yaml` file (or `kalias.txt` file if
-`kconfig` is configured to look there also for nickname definitions).
+`kconfig` is configured to look there also for nickname definitions).  If there's already a `kset`
+in effect, you can omit the nickname, which is only useful if you've changed your definition and
+want to refresh it, or if you're providing new options (e.g., `kset -n foo`).  Finally, you
+can specify a nickname of a dash (`-`) to switch back to a _previous_ kset environment.
 
 In the simplest form, you'll just type `kset nickname` to create a session-local `kubectl`
 configuration file for the current command session that accesses the Kubernetes cluster, etc, that
 is described by the given nickname.  The `KUBECONFIG` environment variable is set to include the
 session-local `kubectl` configuration file in the `kubectl` search path.  Unless you've disabled it in
 the preferences, your shell prompt will be modified to include the nickname in the prompt, so you'll
-know what nickname each command session is currently accessing.
+know what nickname each command session is currently accessing.  There's also a preference to ask
+for the Kubernetes namespace to always be shown in the prompt, if you prefer that (it's not shown
+by default.)
 
 For example:
 ```
 $ kset dev
 (dev) $ echo $KUBECONFIG
 /tmp/kconfig/sessions/812129604.yaml:/home/jph/.kube/config
+```
+
+You can specify a dash (`-`) for the nickname and options to indicate that you want to switch to a
+_previous_ kset environment, making it easy to swap back and forth between two of them:
+
+```
+$ kset dev
+(dev) $ kset stage
+(stage) $ kset -
+(dev) $ koff
+$
 ```
 
 ### Overrides on the kset command line
@@ -318,6 +339,8 @@ The supported options are:
         --user=NAME          The user name to use.  If not specified, the value from the nickname
                              definition is used, or if none is provided there, the user
                              associated the specified or default context.
+        --teleport-proxy=PROXYHOST    The Teleport host and optionally the port to use with context.
+                             This is used to set the TELEPORT_PROXY environment variable.
 
 As an example of how to use override options, assume you have a nickname like the following, that
 specifies a particular context and namespace:
@@ -341,6 +364,28 @@ access, but still have an occasional need to access, but don't want to bother cr
 Overriding the `kubectl` context and `kubectl` configuration file are also possible, but probably
 less useful.
 
+You can also run **kset** without a nickname to specify overrides for the nickname already being used.
+For example:
+```bash
+kset dev-app
+# Use this environment
+kset -n project2
+# which is exactly equivalent to:
+kset dev-app -n project2
+```
+
+Similarly, you can specify a dash instead of the nickname as a shorthand for specifying the nickname
+that was previously in use.  When options are given in addition to the dash, any previous options
+are not used for the new `kset` environment; instead the newly-specified options are used.  For
+example:
+
+```
+$ kset dev -n one
+(dev[ns=one]) $ kset stage
+(stage) $ kset - --user user2
+(dev[u=user2]) $
+```
+
 **Remember, the changes effected by `kset` will affect _only_ the command line session in which you
 enter the kset command.**
 
@@ -360,9 +405,13 @@ You can issue **kset** commands to switch to a new nickname without running **ko
 ## kset nickname completion
 
 When you start to have a large number of `kconfig` nicknames defined, you might not be able to
-easily remember their names.  The `kset` command therefore supports Bash shell completion.
+easily remember their names.  The `kset` command therefore supports Bash shell completion of nicknames.
 E.g., if you type `kset dev` and then hit tab once, the nickname will be auto-completed if it's
 unique.  If it's not unique, hit tab twice to see all the nicknames that start with that prefix.
+
+Note that macOS users will need to put an invocation of the
+[`bashcompinit` zsh function](https://zsh.sourceforge.io/Doc/Release/Completion-System.html#index-bashcompinit)
+in their `~/.zshrc` file to enable emulation of the Bash shell completion features.
 
 ## The kconfig version of the kubectl executable
 
@@ -398,11 +447,11 @@ The `kconfig` package downloaded from the
 [Releases](https://github.com/jphx/kconfig/releases/latest) page consists of these files:
 
 1. A file to run from shell initialization to create the shell functions.  This file is in the
-   `setup` directory of the package.  Presently `kconfig` supports only the
-   [Bash](https://www.gnu.org/software/bash/) shell, but contributions to add support for additional
-   shells would be welcome.  You can put the setup script anywhere on your system.  Source it from
-   your shell initialization file.  For `bash`, you might include lines like the following in your
-   `~/.bashrc` file so that it runs only for interactive shells:
+   `setup` directory of the package.  This shell initialization file is usable from the
+   [Bash](https://www.gnu.org/software/bash/) shell (Linux) or the [Zsh](https://zsh.sourceforge.io/) shell (macOS).
+   You can put the setup script anywhere on your system.  Source it from
+   your shell initialization file.  For `bash` and `zsh`, you might include lines like the following in your
+   `~/.bashrc` or `~/.zshrc` file so that it runs only for interactive shells:
 
    ```bash
    if [[ $- == *i* ]]; then
@@ -410,6 +459,8 @@ The `kconfig` package downloaded from the
       . /path/to/kconfig/setup/kconfig-setup.sh
    fi
    ```
+   For `zsh` users, you'll also want to run the `bashcompinit` shell function first to enable Zsh
+   emulation of the Bash command-line completion facility.
 
 2. The **kconfig-util** program that's use by the shell functions to perform the real work.  Put
    this program anywhere in your `PATH` so that it's available when the shell functions need it.
@@ -436,7 +487,7 @@ You can get the executable programs in the following ways.
 ## Use the Releases page
 
 Point your browser at https://github.com/jphx/kconfig/releases/latest and download the tar file
-for the operating system that you're using.  Tar files are provided for Linux and MacOS.
+for the operating system that you're using.  Tar files are provided for Linux and macOS.
 
 Expand the tar file someplace on your filesystem.  Copy or move the executable programs into your
 `PATH`.  Make sure the provided **kubectl** program is in a directory earlier in the `PATH` than the
@@ -444,7 +495,7 @@ Kubernetes version of `kubectl`.   Find the best setup shell script from the `se
 and call it from your shell initialization file as described [above](#installation).  The available
 files are:
 
- - The Bash shell: kconfig-setup.sh
+ - The Bash and Zsh shells: `kconfig-setup.sh`
 
 If no tar file suitable for your operating system is provided, use one of the following alternative
 installation approaches.
@@ -464,7 +515,7 @@ the `PATH`.  Make sure the `$GOBIN` directory is earlier in your `PATH` than whe
 version of `kubectl` is installed.
 
 Don't forget to fetch the setup shell script and source it from your shell initialization file
-(e.g., `~/.bashrc`).
+(e.g., `~/.bashrc` or `~/.zshrc`).
 
 ## Clone the repository and build it yourself
 
@@ -479,7 +530,8 @@ cd kconfig
 make install
 ```
 
-Don't forget to source the setup shell script from your shell initialization file (e.g., `~/.bashrc`).
+Don't forget to source the setup shell script from your shell initialization file
+(e.g., `~/.bashrc` or `~/.zshrc`).
 
 # Miscellaneous
 
@@ -563,9 +615,9 @@ nicknames:
 Note that when using Teleport, you're still responsible for issuing the `tsh login` commands as
 necessary.  When you do this, be sure to do it when there's no `kset` in effect, otherwise the
 `tsh login` command may end up updating the context-specific `kubectl` configuration file instead of
-your base file.  If you use a separate utility to execute `tsh login`, you can always just unset the
-`KUBECONFIG` environment variable before executing `tsh login`.  Then you can run the utility even
-when a `kset` context is in effect.
+your base file.  If you use a separate utility script to execute `tsh login`, you can always just
+unset the `KUBECONFIG` environment variable in that script before executing `tsh login`.  Then you
+can run the utility even when a `kset` context is in effect.
 
 ## Preventing an explosion of local kubectl configuration files
 
@@ -598,18 +650,18 @@ You might wonder whether it's necessary to run **kset** again after using your c
 command to refresh your Kubernetes cluster configuration.  Generally the answer is no.  Remember
 that the temporary configuration file has only a context in it (and sometimes just a
 `current-context` specification).  The context refers to a cluster name, a namespace name, and a
-user name.  Unless your cloud provider command changes one of these in your base configuration
-files, it shouldn't be necessary to run **kset** after updating them.  If, however, one of these
-things change, then yes, you should run the **kset** command again to refresh the local
-configuration file.
+user name.  Unless your cloud provider command changes the name of one of these in your base
+configuration files, it shouldn't be necessary to run **kset** after updating them.  If, however,
+one of these names does change, then yes, you should run the **kset** command again to refresh the
+local configuration file.
 
 **Beware:** Some cloud provider commands update the file referenced by the _first_ entry in the
 `KUBECONFIG` environment variable instead of the last.  The `oc login` command appears to behave
 this way.  If the command you use to refresh your configuration is one of these, be sure to run
 **koff** before executing the command that refreshes your configuration, so the command won't update
-the temporary file instead of the file containing the long-term configuration.
-If you use a separate utility to refresh your configuration files, you can always just unset the
-`KUBECONFIG` environment variable in the utility beforehand.  Then you can run the utility even when
+the temporary file instead of the file containing the long-term configuration.  If you use a
+separate utility script to refresh your configuration files, you can always just unset the
+`KUBECONFIG` environment variable in the script beforehand.  Then you can run the utility even when
 a `kset` context is in effect.
 
 ## Is kconfig better than kalias?
