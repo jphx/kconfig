@@ -49,7 +49,12 @@ func koffProcessor(positionalArgs []string) {
 		fmt.Println("unset KUBECONFIG")
 	}
 
-	// The koff shell function will unset the _KCONFIG_KUBECTL and TELEPORT_PROXY environment variables.
+	// The koff shell function will unset the following environment variables:
+	//   - _KCONFIG_KUBECTL
+	//   - TELEPORT_PROXY
+	//   - _KCONFIG_KSET
+	// Note that _KCONFIG_OLDKSET is allowed to remain so that the user can run "kset -" to regain
+	// the last environment.
 }
 
 func init() {

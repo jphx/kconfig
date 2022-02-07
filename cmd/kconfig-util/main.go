@@ -31,7 +31,23 @@ func main() {
 
 // parseOptions parses the command-line options, returning only if they can be successfully parsed.
 func parseOptions() []string {
-	positionalArgs, err := parser.Parse()
+	argsToParse := os.Args[1:]
+
+	// Special case handling for the "kset -" subcommand, where we fetch the env var that describes
+	// the previous environment and parse that instead.
+	// Beware this test fails when the --debug option is specified.
+	if len(argsToParse) == 2 && argsToParse[0] == "kset" && argsToParse[1] == "-" {
+		previousKset := os.Getenv("_KCONFIG_OLDKSET")
+		if previousKset == "" {
+			fmt.Fprintln(os.Stderr, "A kconfig nickname of \"-\" can only be used when a kconfig environment is already in effect.")
+			os.Exit(1)
+		}
+
+		argsToParse = []string{"kset"}
+		argsToParse = append(argsToParse, getArgsFromKsetArgs(previousKset)...)
+	}
+
+	positionalArgs, err := parser.ParseArgs(argsToParse)
 	if err != nil {
 		// Print errors, and even help output, to stderr.
 		fmt.Fprintln(os.Stderr, err)

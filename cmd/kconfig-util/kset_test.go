@@ -27,6 +27,8 @@ type TestCase struct {
 	CopyKconfigYaml       bool
 	CopyKaliasTxt         bool
 	Arguments             []string
+	KsetEnvVar            string
+	OldKsetEnvVar         string
 	ExpectError           string
 	ExpectKubeconfig      string
 	ExpectKubectlExe      string
@@ -235,6 +237,30 @@ var casesToTest = []TestCase{
 		ExpectLocalConfigFile: "2",
 	},
 	{
+		Name:                  "Override kconfig namespace on command, with no nickname",
+		Preferences:           config.KconfigPreferences{},
+		CopyKconfigYaml:       true,
+		CopyKaliasTxt:         false,
+		Arguments:             []string{"-n", "namespace-override"},
+		KsetEnvVar:            "dev-namespace -n other-namespace",
+		ExpectKubeconfig:      ".kube/config",
+		ExpectKubectlExe:      "kubectl",
+		ExpectPrompt:          "dev-namespace[ns=namespace-override]",
+		ExpectLocalConfigFile: "2",
+	},
+	{
+		Name:                  "Override kconfig namespace on command, with dash for nickname",
+		Preferences:           config.KconfigPreferences{},
+		CopyKconfigYaml:       true,
+		CopyKaliasTxt:         false,
+		Arguments:             []string{"-", "-n", "namespace-override"},
+		OldKsetEnvVar:         "dev-namespace -n other-namespace",
+		ExpectKubeconfig:      ".kube/config",
+		ExpectKubectlExe:      "kubectl",
+		ExpectPrompt:          "dev-namespace[ns=namespace-override]",
+		ExpectLocalConfigFile: "2",
+	},
+	{
 		Name:                  "Override user on command",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
@@ -319,6 +345,18 @@ var casesToTest = []TestCase{
 		ExpectKubectlExe:      "kubectl",
 		ExpectPrompt:          "dev[ns=devnamespace1]",
 		ExpectLocalConfigFile: "3",
+	},
+	{
+		Name:                  "Using just a nickname of dash",
+		Preferences:           config.KconfigPreferences{},
+		CopyKconfigYaml:       true,
+		CopyKaliasTxt:         false,
+		Arguments:             []string{"-"},
+		OldKsetEnvVar:         "dev-namespace -n namespace-override",
+		ExpectKubeconfig:      ".kube/config",
+		ExpectKubectlExe:      "kubectl",
+		ExpectPrompt:          "dev-namespace[ns=namespace-override]",
+		ExpectLocalConfigFile: "2",
 	},
 	{
 		Name: "Different default kubectl config",
@@ -455,6 +493,16 @@ func TestKsetResults(t *testing.T) {
 		os.Exit(1)
 	}
 
+	unscrubbedEnvVars := os.Environ()
+	environmentVars := unscrubbedEnvVars[:0] // Slice that shared underlying array
+
+	// Scrub some env vars from array, so they can't affect the tests
+	for _, value := range unscrubbedEnvVars {
+		if !strings.HasPrefix(value, "_KCONFIG_KSET") && !strings.HasPrefix(value, "_KCONFIG_OLDKSET") {
+			environmentVars = append(environmentVars, value)
+		}
+	}
+
 	for _, testCase := range casesToTest {
 		t.Run(testCase.Name, func(t *testing.T) {
 			// Initialize the files in the home directory appropriately.
@@ -480,9 +528,19 @@ func TestKsetResults(t *testing.T) {
 			}
 			argv = append(argv, testCase.Arguments...)
 
+			envVarsForTest := environmentVars
+			if testCase.OldKsetEnvVar != "" {
+				envVarsForTest = append(envVarsForTest, fmt.Sprintf("_KCONFIG_OLDKSET=%s", testCase.OldKsetEnvVar))
+			}
+			if testCase.KsetEnvVar != "" {
+				t.Log("Assigning _KCONFIG_KSET env var")
+				envVarsForTest = append(envVarsForTest, fmt.Sprintf("_KCONFIG_KSET=%s", testCase.KsetEnvVar))
+			}
+
 			cmd := exec.Command(argv[0], argv[1:]...)
 			var stderr bytes.Buffer
 			cmd.Stderr = &stderr
+			cmd.Env = envVarsForTest
 			outputBytes, err := cmd.Output()
 			if err != nil {
 				if testCase.ExpectError == "" {
