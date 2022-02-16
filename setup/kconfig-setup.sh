@@ -28,7 +28,7 @@ function koff() {
 
    # Remove any session-local kubectl configuration file and unset or restore the KUBECONFIG env var.
    if [[ -n "$KUBECONFIG" ]]; then
-      eval $(kconfig-util koff "$@")
+      eval "$(kconfig-util koff "$@")"
    fi
 
    # More cleanup
@@ -40,7 +40,7 @@ function kset() {
    # Run the service utility to create the session-local config file.  Evaluate any statements it
    # sends to standard output, which we expect are to set environment variables.
    local _KP
-   eval $(kconfig-util kset "$@")
+   eval "$(kconfig-util kset "$@")"
 
    # kconfig-util sets the _KP variable with the shell prompt info
    if [[ -n "$_KP" ]]; then

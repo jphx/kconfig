@@ -49,6 +49,12 @@ func koffProcessor(positionalArgs []string) {
 		fmt.Println("unset KUBECONFIG")
 	}
 
+	// Transfer the description of the most-recent kset environment to the _KCONFIG_OLDKSET env var.
+	previousKset := os.Getenv("_KCONFIG_KSET")
+	if previousKset != "" {
+		fmt.Println("export _KCONFIG_OLDKSET=\"$_KCONFIG_KSET\"")
+	}
+
 	// The koff shell function will unset the following environment variables:
 	//   - _KCONFIG_KUBECTL
 	//   - TELEPORT_PROXY
