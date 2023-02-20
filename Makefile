@@ -11,8 +11,9 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-lint: ## Run golint against code.
-	golint ./...
+lint: ## Run linters against the code
+# The "revive" linter is the replacement for the classic "golint" utility.
+	golangci-lint run -E revive
 
 # The following go build command passes a build-time variable to the linker.
 # https://belief-driven-design.com/build-time-variables-in-go-51439b26ef9/
