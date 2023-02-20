@@ -39,7 +39,7 @@ func parseOptions() []string {
 	if len(argsToParse) == 2 && argsToParse[0] == "kset" && argsToParse[1] == "-" {
 		previousKset := os.Getenv("_KCONFIG_OLDKSET")
 		if previousKset == "" {
-			fmt.Fprintln(os.Stderr, "A kconfig nickname of \"-\" can only be used when a kconfig environment is already in effect.")
+			fmt.Fprintln(os.Stderr, "A kconfig nickname of \"-\" can only be used when a kconfig environment was previously in effect.")
 			os.Exit(1)
 		}
 
