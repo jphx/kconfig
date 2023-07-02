@@ -1,4 +1,4 @@
-VERSION:=1.2.2
+VERSION:=1.3.0
 
 all: build
 
@@ -31,6 +31,7 @@ dist: ## Create distributable tar files for Linux and MacOS.
 	@mkdir -p dist/work
 	$(call platform-build,linux,amd64)
 	$(call platform-build,darwin,amd64)
+	$(call platform-build,darwin,arm64)
 	@rm -r dist/work
 
 define platform-build
