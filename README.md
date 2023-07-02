@@ -21,7 +21,6 @@
   - [Does kconfig work with Teleport?](#does-kconfig-work-with-teleport)
   - [Preventing an explosion of local kubectl configuration files](#preventing-an-explosion-of-local-kubectl-configuration-files)
   - [Do temporary configuration files need to be refreshed?](#do-temporary-configuration-files-need-to-be-refreshed)
-  - [Is kconfig better than kalias?](#is-kconfig-better-than-kalias)
   - [How can I use a shortened command name like just "k"?](#how-can-i-use-a-shortened-command-name-like-just-k)
   - [Unexpected changes to the kubectl configuration file](#unexpected-changes-to-the-kubectl-configuration-file)
 
@@ -78,9 +77,6 @@ The kconfig package was created with these requirements in mind:
 
 6. The implementation shouldn't require using a command other than `kubectl`, like a shell alias or
    different frontend to `kubectl`.  Otherwise third-party utilities that use `kubectl` won't work.
-   A shell alias, like that created by the older [kalias](https://github.com/jphx/kalias)
-   package,
-   [also has problems](https://github.com/jphx/kconfig/wiki/Comparing-kconfig-with-kalias).
 
 # How kconfig works
 
@@ -231,11 +227,6 @@ preferences:
   # when the prompt is being modified.  If unspecified, the default is false.
   always_show_namespace_in_prompt: true
 
-  # Says whether or not kset will look in the ~/.kube/kalias.txt file as a source of nicknames.
-  # This is to make it easier to migrate from the older kalias utility.  The default is false,
-  # unless the ~/.kube/kconfig.yaml file doesn't exist, in which cases it's true.
-  read_kalias_config: true
-
   # The default KUBECONFIG environment variable setting to be used.  If not specified, it defaults
   # to the empty string, which kubectl interprets as "~/.kube/config".  Specify this if your
   # "normal" kubectl configuration file (or files) is different than "~/.kube/config".
@@ -288,8 +279,7 @@ namespace, etc., that you describe in your nickname definition. The syntax is:
 
     kset [nickname|-] [options]
 
-where `nickname` is one of the nicknames from your `kconfig.yaml` file (or `kalias.txt` file if
-`kconfig` is configured to look there also for nickname definitions).  If there's already a `kset`
+where `nickname` is one of the nicknames from your `kconfig.yaml` file.  If there's already a `kset`
 in effect, you can omit the nickname, which is only useful if you've changed your definition and
 want to refresh it, or if you're providing new options (e.g., `kset -n foo`).  Finally, you
 can specify a nickname of a dash (`-`) to switch back to a _previous_ kset environment.
@@ -663,13 +653,6 @@ the temporary file instead of the file containing the long-term configuration.  
 separate utility script to refresh your configuration files, you can always just unset the
 `KUBECONFIG` environment variable in the script beforehand.  Then you can run the utility even when
 a `kset` context is in effect.
-
-## Is kconfig better than kalias?
-
-The older [kalias](https://github.com/jphx/kalias) utility is a small program that attempted to
-provide a similar capability, but its simplicity kept it from working in a variety of circumstances.
-A discussion of the benefits of `kconfig` is available in
-[Comparing kconfig with kalias](https://github.com/jphx/kconfig/wiki/Comparing-kconfig-with-kalias).
 
 ## How can I use a shortened command name like just "k"?
 

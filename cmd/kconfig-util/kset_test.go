@@ -25,7 +25,6 @@ type TestCase struct {
 	Name                  string
 	Preferences           config.KconfigPreferences
 	CopyKconfigYaml       bool
-	CopyKaliasTxt         bool
 	Arguments             []string
 	KsetEnvVar            string
 	OldKsetEnvVar         string
@@ -57,7 +56,6 @@ var casesToTest = []TestCase{
 		Name:                  "Simple nickname",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -65,42 +63,9 @@ var casesToTest = []TestCase{
 		ExpectLocalConfigFile: "1",
 	},
 	{
-		Name:                  "Nickname with just kconfig",
-		Preferences:           config.KconfigPreferences{},
-		CopyKconfigYaml:       false,
-		CopyKaliasTxt:         true,
-		Arguments:             []string{"devfromkalias"},
-		ExpectKubeconfig:      ".kube/config",
-		ExpectKubectlExe:      "kubectl",
-		ExpectPrompt:          "devfromkalias",
-		ExpectLocalConfigFile: "1",
-	},
-	{
-		Name:            "Nickname from kalias not allowed",
-		Preferences:     config.KconfigPreferences{},
-		CopyKconfigYaml: true,
-		CopyKaliasTxt:   true,
-		Arguments:       []string{"devfromkalias"},
-		ExpectError:     "Nickname \"devfromkalias\" is not defined.",
-	},
-	{
-		Name: "Nickname from kalias allowed",
-		Preferences: config.KconfigPreferences{
-			ReadKaliasConfig: true,
-		},
-		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         true,
-		Arguments:             []string{"devfromkalias"},
-		ExpectKubeconfig:      ".kube/config",
-		ExpectKubectlExe:      "kubectl",
-		ExpectPrompt:          "devfromkalias",
-		ExpectLocalConfigFile: "1",
-	},
-	{
 		Name:                  "Nickname has namespace",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-namespace"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -113,7 +78,6 @@ var casesToTest = []TestCase{
 			AlwaysShowNamespaceInPrompt: true,
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-no-namespace-in-context"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -124,7 +88,6 @@ var casesToTest = []TestCase{
 		Name:                  "Nickname has user",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-user"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -137,7 +100,6 @@ var casesToTest = []TestCase{
 			AlwaysShowNamespaceInPrompt: true,
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-user"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -148,7 +110,6 @@ var casesToTest = []TestCase{
 		Name:                  "Nickname has user and namespace",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-namespace-user"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -161,7 +122,6 @@ var casesToTest = []TestCase{
 			AlwaysShowNamespaceInPrompt: true,
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-namespace-user"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -175,7 +135,6 @@ var casesToTest = []TestCase{
 			AlwaysShowNamespaceInPrompt: true,
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-namespace-user"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -186,7 +145,6 @@ var casesToTest = []TestCase{
 		Name:            "Nickname has invalid option",
 		Preferences:     config.KconfigPreferences{},
 		CopyKconfigYaml: true,
-		CopyKaliasTxt:   false,
 		Arguments:       []string{"bad-option"},
 		ExpectError:     "unknown flag .bad-option.",
 	},
@@ -194,7 +152,6 @@ var casesToTest = []TestCase{
 		Name:                  "Nickname has executable",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-executable"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl-99",
@@ -207,7 +164,6 @@ var casesToTest = []TestCase{
 			DefaultKubectl: "kubectl-default",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl-default",
@@ -218,7 +174,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override namespace on command",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "-n", "namespace-override"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -229,7 +184,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override kconfig namespace on command",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-namespace", "-n", "namespace-override"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -240,7 +194,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override kconfig namespace on command, with no nickname",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"-n", "namespace-override"},
 		KsetEnvVar:            "dev-namespace -n other-namespace",
 		ExpectKubeconfig:      ".kube/config",
@@ -252,7 +205,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override kconfig namespace on command, with dash for nickname",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"-", "-n", "namespace-override"},
 		OldKsetEnvVar:         "dev-namespace -n other-namespace",
 		ExpectKubeconfig:      ".kube/config",
@@ -264,7 +216,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override user on command",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "--user", "devuser2"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -275,7 +226,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override namespace and user on command",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "-n", "namespace-override", "--user", "devuser2"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -288,7 +238,6 @@ var casesToTest = []TestCase{
 			ChangePrompt: GetBoolPtr(false),
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "--user", "devuser2"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -301,7 +250,6 @@ var casesToTest = []TestCase{
 			ShowOverridesInPrompt: GetBoolPtr(false),
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "--user", "devuser2"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -312,7 +260,6 @@ var casesToTest = []TestCase{
 		Name:                  "Override kubeconfig",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-kubeconfig"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -325,7 +272,6 @@ var casesToTest = []TestCase{
 			AlwaysShowNamespaceInPrompt: true,
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "--user", "devuser2"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -339,7 +285,6 @@ var casesToTest = []TestCase{
 			AlwaysShowNamespaceInPrompt: true,
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev", "--user", "devuser2"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -350,7 +295,6 @@ var casesToTest = []TestCase{
 		Name:                  "Using just a nickname of dash",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"-"},
 		OldKsetEnvVar:         "dev-namespace -n namespace-override",
 		ExpectKubeconfig:      ".kube/config",
@@ -364,7 +308,6 @@ var casesToTest = []TestCase{
 			BaseKubeconfig: "$HOME/.kube/testing.config",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-assume-testing"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -377,7 +320,6 @@ var casesToTest = []TestCase{
 			BaseKubeconfig: "$HOME/.kube/testing.missing:$HOME/.kube/testing.config",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-assume-testing"},
 		ExpectKubeconfig:      ".kube/testing.missing:.kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -390,7 +332,6 @@ var casesToTest = []TestCase{
 			BaseKubeconfig: "$HOME/.kube/missing.config",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-kubeconfig"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -403,7 +344,6 @@ var casesToTest = []TestCase{
 			BaseKubeconfig: "$HOME/.kube/testing.missing:$HOME/.kube/missing.config",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-kubeconfig"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -416,7 +356,6 @@ var casesToTest = []TestCase{
 			BaseKubeconfig: "$HOME/.kube/missing.config",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-kubeconfig-and-context"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -429,7 +368,6 @@ var casesToTest = []TestCase{
 			BaseKubeconfig: "$HOME/.kube/missing.config",
 		},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-kubeconfig-and-context-and-namespace"},
 		ExpectKubeconfig:      ".kube/testing.config",
 		ExpectKubectlExe:      "kubectl",
@@ -440,7 +378,6 @@ var casesToTest = []TestCase{
 		Name:                  "Simple nickname with Teleport proxy",
 		Preferences:           config.KconfigPreferences{},
 		CopyKconfigYaml:       true,
-		CopyKaliasTxt:         false,
 		Arguments:             []string{"dev-with-teleport-proxy"},
 		ExpectKubeconfig:      ".kube/config",
 		ExpectKubectlExe:      "kubectl",
@@ -454,7 +391,7 @@ var testHomeDir string
 
 func TestMain(m *testing.M) {
 	// Set the HOME environment variable to the testdata/home directory, so that we can control
-	// what kconfig.yaml and kalias.txt files are there.
+	// what kconfig.yaml files are there.
 	var err error
 	testHomeDir, err = filepath.Abs(filepath.Join("testdata", "home"))
 	if err != nil {
@@ -510,13 +447,6 @@ func TestKsetResults(t *testing.T) {
 				err = copyConfigFile(t, "kconfig.yaml", &testCase.Preferences)
 				if err != nil {
 					t.Errorf("Error copying \"kconfig.yaml\": %v", err)
-					return
-				}
-			}
-			if testCase.CopyKaliasTxt {
-				err = copyConfigFile(t, "kalias.txt", nil)
-				if err != nil {
-					t.Errorf("Error copying \"kalias.txt\": %v", err)
 					return
 				}
 			}

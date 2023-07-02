@@ -1,10 +1,8 @@
 package config
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,11 +49,6 @@ type KconfigPreferences struct {
 	// is false.
 	AlwaysShowNamespaceInPrompt bool `yaml:"always_show_namespace_in_prompt,omitempty"`
 
-	// ReadKaliasConfig says whether or not we'll look for the ~/.kube/kalias.txt file as a source
-	// of nicknames.  The default is false, unless the ~/.kube/kconfig.yaml file doesn't exist, in
-	// which cases it's true.
-	ReadKaliasConfig bool `yaml:"read_kalias_config,omitempty"`
-
 	// The default KUBECONFIG environment variable setting to be used.  If not specified, it
 	// defaults to the empty string, which kubectl interprets as "~/.kube/config".
 	BaseKubeconfig string `yaml:"base_kubeconfig,omitempty"`
@@ -82,8 +75,8 @@ func getHomeDirectory() string {
 var cachedKconfig *Kconfig
 var cachedKconfigError error
 
-// GetKconfig fetches the configuration as describes in kconfig.yaml and possibly augmented with
-// kalias.txt.  It's safe to call multiple times.  Only the first call with read and parse the
+// GetKconfig fetches the configuration as described in kconfig.yaml.
+// It's safe to call multiple times.  Only the first call will read and parse the
 // files.  Subsequent calls will return cached results.
 func GetKconfig() *Kconfig {
 	//if cachedKconfigError != nil {
@@ -117,9 +110,6 @@ func readKconfig() (*Kconfig, error) {
 
 		logger.Debugf("Skipping read of kconfig.yaml, since file \"%s\" doesn't exist.", kconfigYamlFilename)
 
-		// If the Kconfig file doesn't exist, maybe the Kalias file will exist.
-		kconfig.Preferences.ReadKaliasConfig = true
-
 	} else {
 		// Read and parse the Kconfig file.
 		err := yaml.NewDecoder(configFile).Decode(kconfig)
@@ -137,67 +127,6 @@ func readKconfig() (*Kconfig, error) {
 		//for n := range kconfig.Nicknames {
 		//	logger.Debugf("Nickname: \"%s\"", n)
 		//}
-	}
-
-	if kconfig.Preferences.ReadKaliasConfig {
-		logger.Debug("Merging contents of kalias.txt.")
-		// We should merge the config we've read with the older kalias config file.
-		configFile, err = os.Open(filepath.Join(getHomeDirectory(), ".kube", "kalias.txt"))
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return kconfig, nil
-			}
-			return nil, err
-		}
-
-		nicknames := kconfig.Nicknames
-		reader := bufio.NewReader(configFile)
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil && err != io.EOF {
-				fmt.Fprintf(os.Stderr, "Ignoring error reading kalias definitions from \"%s\": %v\n", configFile.Name(), err)
-				break
-			}
-
-			line = strings.TrimSpace(line)
-			if len(line) == 0 {
-				if err == io.EOF {
-					break
-				}
-				continue
-			}
-
-			if line[0] == '#' {
-				continue
-			}
-
-			equals := strings.IndexByte(line, '=')
-			if equals == -1 {
-				continue
-			}
-
-			nickname := line[0:equals]
-			if _, isDefinedAlready := nicknames[nickname]; isDefinedAlready {
-				// Definition from kconfig.yaml take precedence.
-				continue
-			}
-
-			if equals == len(line)-1 {
-				continue
-			}
-
-			defn := line[equals+1:]
-			//logger.Debugw("Adding from kalias.", "nickname", nickname, "defn", defn)
-			nicknames[nickname] = defn
-
-			if err == io.EOF {
-				break
-			}
-		}
-
-		configFile.Close()
-	} else {
-		logger.Debug("Skipping merging of contents of kalias.txt.")
 	}
 
 	return kconfig, nil

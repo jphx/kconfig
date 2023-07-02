@@ -3,7 +3,6 @@
 #  change_prompt: false
 #  show_overrides_in_prompt: false
 #  always_show_namespace_in_prompt: true
-#  read_kalias_config: true
 #  base_kubeconfig: xxx
 
 nicknames:

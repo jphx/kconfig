@@ -1,3 +1,0 @@
-devfromkalias=--context dev
-# Make sure the definition from kalias.yaml takes precedence
-dev=--context dev --namespace fromkalias
