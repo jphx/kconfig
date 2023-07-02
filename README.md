@@ -401,7 +401,12 @@ unique.  If it's not unique, hit tab twice to see all the nicknames that start w
 
 Note that macOS users will need to put an invocation of the
 [`bashcompinit` zsh function](https://zsh.sourceforge.io/Doc/Release/Completion-System.html#index-bashcompinit)
-in their `~/.zshrc` file to enable emulation of the Bash shell completion features.
+in their `~/.zshrc` file to enable emulation of the Bash shell completion features.  E.g.,
+
+```bash
+autoload -U +X compinit && compinit
+autoload -U +X bashcompinit && bashcompinit
+```
 
 ## The kconfig version of the kubectl executable
 
@@ -449,8 +454,20 @@ The `kconfig` package downloaded from the
       . /path/to/kconfig/setup/kconfig-setup.sh
    fi
    ```
+
    For `zsh` users, you'll also want to run the `bashcompinit` shell function first to enable Zsh
-   emulation of the Bash command-line completion facility.
+   emulation of the Bash command-line completion facility.  E.g.,
+
+   ```zsh
+   if [[ $- == *i* ]]; then
+      autoload -U +X compinit && compinit
+      autoload -U +X bashcompinit && bashcompinit
+
+      # Initialize kconfig shell functions and auto completion
+      . /path/to/kconfig/setup/kconfig-setup.sh
+   fi
+   ```
+
 
 2. The **kconfig-util** program that's use by the shell functions to perform the real work.  Put
    this program anywhere in your `PATH` so that it's available when the shell functions need it.
